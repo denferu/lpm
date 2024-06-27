@@ -10,4 +10,9 @@
     // Luau LSP
     "luau-lsp.sourcemap.enabled": false,
     "luau-lsp.platform.type": "standard",
+    // Lune
+    "luau-lsp.require.mode": "relativeToFile",
+    "luau-lsp.require.directoryAliases": {
+        "@lune/": "~/.lune/.typedefs/0.8.6/"
+    }
 }
