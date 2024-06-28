@@ -101,6 +101,30 @@ function packages.download(package: Package, githubApiToken: string?): string
 end
 
 packages.container = "packages"
+packages.internalContainer = "_"
+
+local function createMissingDirectories()
+	if not fs.isDir(packages.container) then
+		assert(not fs.isFile(packages.container), "invalid packages container: it's a file.")
+		fs.writeDir(packages.container)
+	end
+
+	local internal = paths.push(packages.container, packages.internalContainer)
+
+	if not fs.isDir(internal) then
+		assert(not fs.isFile(internal), "invalid internal packages container: it's a file.")
+		fs.writeDir(internal)
+	end
+end
+
+local function writeAliasModule(fileName: string, requires: string)
+	createMissingDirectories()
+
+	local content = `return require({requires})\n`
+	local file = paths.push(packages.container, fileName)
+
+	fs.writeFile(file, content)
+end
 
 --[=[
 	@param path The path to install as a package
@@ -115,12 +139,9 @@ packages.container = "packages"
 	@error IO error
 ]=]
 function packages.installPath(path: string, asName: string, interactive: boolean)
-	if not fs.isDir(packages.container) then
-		assert(not fs.isFile(packages.container), "invalid packages container: it's a file.")
-		fs.writeDir(packages.container)
-	end
+	createMissingDirectories()
 
-	local moveTo = paths.push(packages.container, asName)
+	local moveTo = paths.push(packages.container, packages.internalContainer, asName)
 
 	if fs.isFile(moveTo) or fs.isDir(moveTo) then
 		if not interactive or not stdio.prompt("confirm", `{moveTo} already exists, delete?`) then
@@ -145,6 +166,53 @@ function packages.installPath(path: string, asName: string, interactive: boolean
 	end
 
 	return moveTo
+end
+
+packages.entryPoints = {
+	paths.push("src", "init.luau"),
+	"init.luau",
+}
+
+--[=[
+	Writes an alias module to the packages directory that
+	re-exports `requires`.
+
+	The entry point for `requires` is automatically determined,
+	see possible entry points in `packages.entryPoints`.
+
+	This function makes aliases for the internal package
+	directory named `_` inside `packages/`
+
+	@param alias The name of the alias module excluding .luau extension
+	@param internalName The internal name of the require destination
+
+	@error Entry point for `requires` not found
+	@error IO error
+]=]
+function packages.writeAlias(alias: string, internalName: string)
+	local entryPoint: string?
+
+	for _, partialPath in packages.entryPoints do
+		local full = paths.push(packages.container, packages.internalContainer, internalName, partialPath)
+
+		print(full)
+
+		if fs.isFile(full) then
+			entryPoint = full
+			break
+		end
+	end
+
+	if not entryPoint then
+		error(`entry point for "{internalName}" not found`)
+	end
+
+	local fileName = paths.withExtension(alias, "luau")
+	local requires = paths.push(select(2, unpack(paths.split(entryPoint))))
+	requires = requires:gsub("\\", "\\\\")
+	requires = paths.withExtension(requires, "") -- since luau doesn't want extensions in requires
+
+	writeAliasModule(fileName, `"{requires}"`)
 end
 
 return packages
