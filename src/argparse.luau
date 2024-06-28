@@ -1,5 +1,10 @@
 local process = require("@lune/process")
 
+export type Switch = {
+	name: string,
+	value: string?,
+}
+
 --[=[
 	Parses Windows switch-like CLI arguments:
 	- Switches are flags that may have values, e.g.:
@@ -12,7 +17,7 @@ local process = require("@lune/process")
 	@error Parsing error: invalid switch syntax
 ]=]
 return function()
-	local switches: { [string]: string } = {}
+	local switches: { Switch } = {}
 	local args: { string } = {}
 
 	for _, arg in process.args do
@@ -27,7 +32,10 @@ return function()
 				error(`duplicate switch "{switch}"`)
 			end
 
-			switches[switch] = if value then value:sub(2) else ""
+			table.insert(switches, {
+				name = "switch",
+				value = if value then value:sub(2) else nil,
+			})
 
 			continue
 		end
