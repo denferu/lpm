@@ -37,4 +37,11 @@ function paths.withExtension(path: string, extension: string)
 	return path:gsub("%.%w+$", "") .. `.{extension}`
 end
 
+--[=[
+	@return The name of `path`, including file extension if present
+]=]
+function paths.name(path: string)
+	return path:match(`[\\/]?([%w%.]+)$`) or ""
+end
+
 return paths
