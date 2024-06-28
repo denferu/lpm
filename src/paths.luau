@@ -34,7 +34,13 @@ function paths.pop(path: string)
 end
 
 function paths.withExtension(path: string, extension: string)
-	return path:gsub("%.%w+$", "") .. `.{extension}`
+	local extensionless = path:gsub("%.%w+$", "")
+
+	if extension:match("^%s*$") then
+		return extensionless
+	else
+		return extensionless .. `.{extension}`
+	end
 end
 
 --[=[
