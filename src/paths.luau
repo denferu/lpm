@@ -33,4 +33,8 @@ function paths.pop(path: string)
 	return table.concat(segments, paths.separator)
 end
 
+function paths.withExtension(path: string, extension: string)
+	return path:gsub("%.%w+$", "") .. `.{extension}`
+end
+
 return paths
