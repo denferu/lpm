@@ -129,34 +129,42 @@ end
 	@error `interactive` is disabled and there exists a duåplicate package `asName`
 	@error IO error
 ]=]
-function packages.installPath(path: string, asName: string, interactive: boolean)
+function packages.installPath(method: "copy" | "move", path: string, asName: string, interactive: boolean)
 	createMissingDirectories()
 
-	local moveTo = paths.push(aliases.containers.modules, asName)
+	local out = paths.push(aliases.containers.modules, asName)
 
-	if fs.isFile(moveTo) or fs.isDir(moveTo) then
-		if not interactive or not stdio.prompt("confirm", `{moveTo} already exists, delete?`) then
+	if fs.isFile(out) or fs.isDir(out) then
+		if not interactive or not stdio.prompt("confirm", `{out} already exists, delete?`) then
 			error("User denied deletion")
 		end
 
-		local success, err: any = pcall(fs.removeFile, moveTo)
+		local success, err: any = pcall(fs.removeFile, out)
 
 		if not success then
-			success, err = pcall(fs.removeDir, moveTo)
+			success, err = pcall(fs.removeDir, out)
 		end
 
 		if not success then
-			error(`couldn't delete \"{moveTo}\": "{err}"`)
+			error(`couldn't delete \"{out}\": "{err}"`)
 		end
 	end
 
-	local moved, err: any = pcall(fs.move, path, moveTo)
+	local success: boolean, result: any
 
-	if not moved then
-		error(err)
+	if method == "copy" then
+		success, result = pcall(fs.move, path, out)
+	elseif method == "move" then
+		success, result = pcall(fs.copy, path, out)
+	else
+		error(`unhandled install method "{method}"`)
 	end
 
-	return moveTo
+	if not success then
+		error(`install failure: {result or "unknown error"}`)
+	end
+
+	return out
 end
 
 return packages
