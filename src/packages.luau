@@ -4,6 +4,7 @@ local process = require("@lune/process")
 local fs = require("@lune/fs")
 local stdio = require("@lune/stdio")
 local paths = require("paths")
+local aliases = require("aliases")
 
 local packages = {}
 
@@ -102,6 +103,20 @@ end
 
 packages.container = "packages"
 
+local function createMissingDirectories()
+	if not fs.isDir(packages.container) then
+		assert(not fs.isFile(packages.container), "invalid packages container: it's a file.")
+		fs.writeDir(packages.container)
+	end
+
+	local internal = paths.push(aliases.containers.modules)
+
+	if not fs.isDir(internal) then
+		assert(not fs.isFile(internal), "invalid internal packages container: it's a file.")
+		fs.writeDir(internal)
+	end
+end
+
 --[=[
 	@param path The path to install as a package
 	@param asName The name to install the package as
@@ -115,12 +130,9 @@ packages.container = "packages"
 	@error IO error
 ]=]
 function packages.installPath(path: string, asName: string, interactive: boolean)
-	if not fs.isDir(packages.container) then
-		assert(not fs.isFile(packages.container), "invalid packages container: it's a file.")
-		fs.writeDir(packages.container)
-	end
+	createMissingDirectories()
 
-	local moveTo = paths.push(packages.container, asName)
+	local moveTo = paths.push(aliases.containers.modules, asName)
 
 	if fs.isFile(moveTo) or fs.isDir(moveTo) then
 		if not interactive or not stdio.prompt("confirm", `{moveTo} already exists, delete?`) then

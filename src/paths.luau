@@ -33,4 +33,21 @@ function paths.pop(path: string)
 	return table.concat(segments, paths.separator)
 end
 
+function paths.withExtension(path: string, extension: string)
+	local extensionless = path:gsub("%.%w+$", "")
+
+	if extension:match("^%s*$") then
+		return extensionless
+	else
+		return extensionless .. `.{extension}`
+	end
+end
+
+--[=[
+	@return The name of `path`, including file extension if present
+]=]
+function paths.name(path: string)
+	return path:match(`[\\/]?([%w%.]+)$`) or ""
+end
+
 return paths
