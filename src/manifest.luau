@@ -1,6 +1,5 @@
 local fs = require("@lune/fs")
 local paths = require("paths")
-local packages = require("packages")
 
 local manifest = {}
 
@@ -49,13 +48,6 @@ function manifest.coerce(manifest: { [unknown]: unknown })
 
 		if typeof(value) ~= "string" then
 			error(`Invalid manifest["dependencies"][{key}] value type, expected string`)
-		end
-
-		local success, returned = pcall(packages.parseDependency, value)
-
-		if not success then
-			local err = tostring(returned):gsub(".+:%d+: ", "")
-			error(`couldn't parse dependency "{key}": {err}`)
 		end
 	end
 
