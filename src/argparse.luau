@@ -16,7 +16,7 @@ return function()
 	local args: { string } = {}
 
 	for _, arg in process.args do
-		local switch, value = arg:match("/(%a%w*)(:?%w*)")
+		local switch, value = arg:match("/(%a%w*)(:?%w*)") -- i did it windows style cause i couldnt implement it unix style rn, too tired :sob:
 
 		if switch then
 			if value and #value == 1 then
